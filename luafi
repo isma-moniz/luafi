@@ -1,0 +1,61 @@
+#!/usr/bin/lua
+
+function WIFI ()
+	local wifi = assert(io.popen("nmcli device wifi list", "r"))
+	local output = wifi:read('*all')
+	wifi:close()
+	return output
+end
+
+function GET_SELECTED()
+	local f = io.open("/tmp/selected-wifi", "r")
+	local net
+	if f then
+		net = f:read('*all')
+	end
+	local result, message = os.remove("/tmp/selected-wifi")
+
+	if not result then
+	   print("Temporary file deletion failed.", message)
+	end
+	return net
+end
+
+function CONNECT_TO (wifi)
+	local nmcli = assert(io.popen("nmcli device wifi connect "..wifi, "w"))
+	nmcli:close()
+end
+
+function FUZZEL (networks)
+	local fuzzel = assert(io.popen("fuzzel --dmenu > /tmp/selected-wifi", "w"))
+	for k, v in pairs(networks) do
+		if k ~= 1 then
+			fuzzel:write(NETWORK_NAME(v), "\n")
+		end
+	end
+	fuzzel:close()
+	CONNECT_TO(GET_SELECTED())
+end
+
+function NETWORK_NAME (line)
+	local sep = "*%s"
+	local string_iterator = string.gmatch(line, "([^"..sep.."]+)")
+	local t = {}
+	for x in string_iterator do
+		t[#t + 1] = x
+	end
+	return t[2]
+end
+
+function PARSER ()
+	local wifi = WIFI()
+	local sep = "\n"
+	local network_iterator = string.gmatch(wifi, "([^"..sep.."]+)")
+	local networks = {}
+	for x in network_iterator do
+		networks[#networks + 1] = x
+	end
+	FUZZEL(networks)
+end
+
+PARSER()
