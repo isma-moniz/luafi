@@ -38,11 +38,12 @@ function FUZZEL (networks)
 end
 
 function NETWORK_NAME (line)
-	local sep = "*%s"
-	local string_iterator = string.gmatch(line, "([^"..sep.."]+)")
+	local sep = "%g+%s?%g+"
+	local string_iterator = string.gmatch(line, sep)
 	local t = {}
 	for x in string_iterator do
 		t[#t + 1] = x
+		print(x)
 	end
 	return t[2]
 end
